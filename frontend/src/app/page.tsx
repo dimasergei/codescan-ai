@@ -1,572 +1,235 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Code, 
-  Zap, 
-  Shield, 
-  Bug, 
-  CheckCircle2, 
-  AlertCircle, 
-  BarChart3, 
-  Terminal, 
-  Sparkles, 
-  ArrowRight, 
-  Play, 
-  Settings,
-  TrendingUp,
-  Clock,
-  Target,
-  Database,
-  Cpu,
-  Globe,
-  Lock,
-  FileText,
-  AlertTriangle,
-  Info
-} from 'lucide-react'
+import React, { useState } from 'react';
+import { ArrowRight, CheckCircle2, Zap, Shield, BarChart3, Globe, Play, Code, Bug, Terminal, Settings, AlertCircle, AlertTriangle, Info, Clock, Cpu, FileText, Database } from 'lucide-react';
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { QualityGauge } from '@/components/quality-gauge'
-import { CodeExampleGallery, CodeExample } from '@/components/code-example-gallery'
-import { EnhancedEditor } from '@/components/enhanced-editor'
-
-interface Issue {
-  line: number
-  column: number
-  severity: 'error' | 'warning' | 'info'
-  message: string
-  type: string
-}
-
-interface AnalysisResult {
-  score: number
-  issues: Issue[]
-  metrics: {
-    complexity: string
-    maintainability: string
-    security: string
-    performance: string
-  }
-  summary: string
-  analysisTime: number
-}
-
-const EXAMPLE_ANALYSES: Record<string, AnalysisResult> = {
-  '1': {
-    score: 45,
-    issues: [
-      { line: 1, column: 1, severity: 'error', message: 'SQL injection vulnerability detected', type: 'Security' },
-      { line: 1, column: 1, severity: 'warning', message: 'Unsanitized user input', type: 'Security' },
-      { line: 3, column: 1, severity: 'info', message: 'Consider using parameterized queries', type: 'Best Practice' }
-    ],
-    metrics: {
-      complexity: 'Low',
-      maintainability: 'Poor',
-      security: 'Critical',
-      performance: 'Good'
-    },
-    summary: 'Critical security vulnerabilities found that could lead to data breaches.',
-    analysisTime: 0.8
-  },
-  '2': {
-    score: 65,
-    issues: [
-      { line: 5, column: 1, severity: 'warning', message: 'Missing cleanup in useEffect', type: 'Performance' },
-      { line: 5, column: 1, severity: 'info', message: 'Potential memory leak detected', type: 'Performance' }
-    ],
-    metrics: {
-      complexity: 'Medium',
-      maintainability: 'Fair',
-      security: 'Good',
-      performance: 'Poor'
-    },
-    summary: 'Memory leak issues that could impact application performance over time.',
-    analysisTime: 1.2
-  },
-  '3': {
-    score: 72,
-    issues: [
-      { line: 2, column: 1, severity: 'warning', message: 'O(n²) time complexity detected', type: 'Performance' },
-      { line: 2, column: 1, severity: 'info', message: 'Consider using Set for O(1) lookups', type: 'Optimization' }
-    ],
-    metrics: {
-      complexity: 'High',
-      maintainability: 'Good',
-      security: 'Good',
-      performance: 'Poor'
-    },
-    summary: 'Inefficient algorithm that can be optimized for better performance.',
-    analysisTime: 0.6
-  }
-}
-
-export default function CodeScanAI() {
-  const [selectedExample, setSelectedExample] = useState<CodeExample | undefined>(undefined)
-  const [code, setCode] = useState('')
-  const [language, setLanguage] = useState('javascript')
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [result, setResult] = useState<AnalysisResult | null>(null)
-  const [showGallery, setShowGallery] = useState(true)
-  const [editorTheme, setEditorTheme] = useState('vs-dark')
-
-  useEffect(() => {
-    if (selectedExample) {
-      setCode(selectedExample.code)
-      setLanguage(selectedExample.language)
-      setShowGallery(false)
-    }
-  }, [selectedExample])
+export default function Home() {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [code, setCode] = useState(`// Example vulnerable code
+const query = "SELECT * FROM users WHERE id = " + userId;
+db.query(query);`);
+  const [issues, setIssues] = useState<Array<{line: number, severity: string, message: string, type: string}>>([]);
+  const [score, setScore] = useState(0);
 
   const analyzeCode = async () => {
-    if (!code.trim()) return
-
-    setIsAnalyzing(true)
-    setResult(null)
-
-    // Simulate analysis with realistic timing
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // Use pre-defined analysis for examples or generate random results
-    if (selectedExample && EXAMPLE_ANALYSES[selectedExample.id]) {
-      setResult(EXAMPLE_ANALYSES[selectedExample.id])
-    } else {
-      // Generate random analysis for custom code
-      const issues: Issue[] = []
-      const numIssues = Math.floor(Math.random() * 5) + 1
-      
-      for (let i = 0; i < numIssues; i++) {
-        const severities: ('error' | 'warning' | 'info')[] = ['error', 'warning', 'info']
-        const types = ['Security', 'Performance', 'Style', 'Best Practice', 'Maintainability']
-        
-        issues.push({
-          line: Math.floor(Math.random() * 20) + 1,
-          column: Math.floor(Math.random() * 30) + 1,
-          severity: severities[Math.floor(Math.random() * severities.length)],
-          message: `Sample issue ${i + 1}: This needs attention`,
-          type: types[Math.floor(Math.random() * types.length)]
-        })
-      }
-
-      const score = Math.max(20, 100 - (issues.length * 15))
-      
-      setResult({
-        score,
-        issues,
-        metrics: {
-          complexity: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
-          maintainability: ['Poor', 'Fair', 'Good', 'Excellent'][Math.floor(Math.random() * 4)],
-          security: ['Critical', 'Poor', 'Fair', 'Good', 'Excellent'][Math.floor(Math.random() * 5)],
-          performance: ['Poor', 'Fair', 'Good', 'Excellent'][Math.floor(Math.random() * 4)]
-        },
-        summary: `Analysis complete. Found ${issues.length} issues requiring attention.`,
-        analysisTime: Math.random() * 2 + 0.5
-      })
-    }
-
-    setIsAnalyzing(false)
-  }
-
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-emerald-400'
-    if (score >= 75) return 'text-yellow-400'
-    if (score >= 60) return 'text-orange-400'
-    return 'text-red-400'
-  }
-
-  const getMetricIcon = (metric: string) => {
-    switch (metric) {
-      case 'complexity': return <Cpu className="w-4 h-4" />
-      case 'maintainability': return <FileText className="w-4 h-4" />
-      case 'security': return <Shield className="w-4 h-4" />
-      case 'performance': return <Zap className="w-4 h-4" />
-      default: return <BarChart3 className="w-4 h-4" />
-    }
-  }
-
-  const getMetricColor = (value: string) => {
-    switch (value) {
-      case 'Excellent': return 'text-emerald-400'
-      case 'Good': return 'text-blue-400'
-      case 'Fair': return 'text-yellow-400'
-      case 'Poor': return 'text-orange-400'
-      case 'Critical': return 'text-red-400'
-      case 'High': return 'text-orange-400'
-      case 'Medium': return 'text-yellow-400'
-      case 'Low': return 'text-green-400'
-      default: return 'text-gray-400'
-    }
-  }
+    setIsAnalyzing(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setIssues([
+      { line: 2, severity: 'error', message: 'SQL injection vulnerability', type: 'Security' },
+      { line: 2, severity: 'warning', message: 'Unsanitized user input', type: 'Security' }
+    ]);
+    setScore(45);
+    setIsAnalyzing(false);
+  };
 
   return (
-    <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full surface-glass-subtle z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-glow">
-                <Code className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gradient">CodeScan AI</h1>
-                <p className="text-xs text-muted-foreground">Enterprise Code Analysis</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowGallery(!showGallery)}
-                className="border-border hover:bg-muted/50"
-              >
-                {showGallery ? 'Hide' : 'Show'} Examples
-              </Button>
-              <Badge
-                variant="secondary"
-                className="bg-emerald-500/15 text-emerald-200 border-emerald-500/30"
-              >
-                <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-400 pulse-glow" />
-                Ready
-              </Badge>
-            </div>
+    <main className="min-h-screen bg-[#0A0E27] text-white overflow-hidden relative selection:bg-blue-500/30 font-sans">
+      
+      {/* 1. ATMOSPHERE (The "Enterprise" Glow) */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[120px]" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+      </div>
+
+      {/* 2. NAVBAR (Floating Glass) */}
+      <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-full px-8 py-3 flex items-center gap-12 shadow-2xl">
+          <div className="font-bold text-xl tracking-tighter bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+            CodeScan AI
           </div>
+          <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+            {['Product', 'Solutions', 'Enterprise', 'Pricing'].map((item) => (
+              <a key={item} href="#" className="hover:text-white transition-colors">{item}</a>
+            ))}
+          </div>
+          <button className="bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-full text-sm font-medium transition-all border border-white/5">
+            Sign In
+          </button>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center space-x-2 bg-muted/30 rounded-full px-4 py-2 mb-8 surface-glass-subtle">
-              <Sparkles className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-accent-foreground">Powered by Advanced AI</span>
-            </div>
-            
-            <h1 className="text-6xl font-bold mb-6 leading-tight text-gradient animate-er-gradient">
-              Intelligent
-              <br />
-              Code Analysis
-            </h1>
-            
-            <p className="text-xl text-muted-foreground mb-12 leading-relaxed max-w-3xl mx-auto">
-              Enterprise-grade code analysis with real-time issue detection, security vulnerability scanning, 
-              and performance optimization recommendations.
-            </p>
-            
-            <div className="flex items-center justify-center space-x-8">
-              <div className="text-center animate-er-float">
-                <div className="text-3xl font-bold text-gradient">250ms</div>
-                <div className="text-sm text-muted-foreground">Analysis Time</div>
-              </div>
-              <div className="text-center animate-er-float" style={{ animationDelay: '0.5s' }}>
-                <div className="text-3xl font-bold text-gradient">99.9%</div>
-                <div className="text-sm text-muted-foreground">Accuracy</div>
-              </div>
-              <div className="text-center animate-er-float" style={{ animationDelay: '1s' }}>
-                <div className="text-3xl font-bold text-gradient">50+</div>
-                <div className="text-sm text-muted-foreground">Languages</div>
-              </div>
-            </div>
+      {/* 3. HERO SECTION (The Big Structure) */}
+      <div className="relative pt-40 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center z-10">
+        
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-8 animate-fade-in-up">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+          </span>
+          Security V2.0 Live
+        </div>
+
+        {/* HEADLINE */}
+        <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 bg-gradient-to-b from-white via-white/90 to-white/50 bg-clip-text text-transparent max-w-5xl">
+          Intelligent Code Security
+        </h1>
+
+        {/* SUBTITLE */}
+        <p className="text-xl text-gray-400 max-w-2xl mb-12 leading-relaxed">
+          Enterprise-grade static analysis with real-time vulnerability detection and automated refactoring pipelines.
+        </p>
+
+        {/* CTA BUTTONS */}
+        <div className="flex flex-col sm:flex-row gap-6 mb-20">
+          <button className="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-semibold text-lg transition-all hover:scale-105 shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] flex items-center gap-2">
+            Get Started Now
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
+          <button className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-semibold text-lg backdrop-blur-md transition-all flex items-center gap-2">
+            <Play className="w-5 h-5 fill-current" />
+            Watch Demo
+          </button>
+        </div>
+
+        {/* 4. THE METRIC GLASS BAR (The EnterpriseRAG Signature) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-2xl shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="relative flex flex-col items-center justify-center p-4 border-b md:border-b-0 md:border-r border-white/10">
+            <div className="text-5xl font-bold text-white mb-2 tracking-tight">250ms</div>
+            <div className="text-sm font-medium text-blue-200/60 uppercase tracking-widest">Latency</div>
           </div>
-
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <Card className="surface-glass hover:shadow-glow transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center mb-4">
-                  <Bug className="w-6 h-6 text-white" />
-                </div>
-                <CardTitle className="text-lg font-semibold">Real-time Detection</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Instant code analysis with inline highlighting and detailed issue explanations
-                </p>
-                <div className="flex items-center text-sm text-primary font-medium">
-                  <ArrowRight className="w-4 h-4 mr-1" />
-                  Learn more
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="surface-glass hover:shadow-glow transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-secondary to-secondary/80 rounded-lg flex items-center justify-center mb-4">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <CardTitle className="text-lg font-semibold">Security Scanning</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Comprehensive vulnerability detection with OWASP compliance checking
-                </p>
-                <div className="flex items-center text-sm text-secondary font-medium">
-                  <ArrowRight className="w-4 h-4 mr-1" />
-                  Learn more
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="surface-glass hover:shadow-glow transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent/80 rounded-lg flex items-center justify-center mb-4">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-                <CardTitle className="text-lg font-semibold">Performance Insights</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  AI-powered optimization suggestions with complexity analysis
-                </p>
-                <div className="flex items-center text-sm text-accent font-medium">
-                  <ArrowRight className="w-4 h-4 mr-1" />
-                  Learn more
-                </div>
-              </CardContent>
-            </Card>
+          
+          <div className="relative flex flex-col items-center justify-center p-4 border-b md:border-b-0 md:border-r border-white/10">
+            <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 mb-2 tracking-tight">0</div>
+            <div className="text-sm font-medium text-blue-200/60 uppercase tracking-widest">False Positives</div>
+          </div>
+          
+          <div className="relative flex flex-col items-center justify-center p-4">
+            <div className="text-5xl font-bold text-white mb-2 tracking-tight">50+</div>
+            <div className="text-sm font-medium text-blue-200/60 uppercase tracking-widest">Languages</div>
           </div>
         </div>
-      </section>
 
-      {/* Code Example Gallery */}
-      <AnimatePresence>
-        {showGallery && (
-          <motion.section
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="py-20 px-6"
-          >
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-4 text-gradient">Try Example Analyses</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Explore real-world code examples with security vulnerabilities, performance issues, and best practice violations.
-                </p>
+      </div>
+
+      {/* 5. INTERACTIVE CODE ANALYSIS SECTION */}
+      <div className="max-w-7xl mx-auto px-6 pb-32">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+            Try Live Analysis
+          </h2>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Experience real-time vulnerability detection with our interactive code analyzer.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Code Editor */}
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="ml-3 text-sm text-gray-400">main.js</span>
               </div>
-              
-              <CodeExampleGallery 
-                onSelectExample={setSelectedExample}
-                selectedExample={selectedExample}
-              />
+              <button 
+                onClick={analyzeCode}
+                disabled={isAnalyzing}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Settings className="w-4 h-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Terminal className="w-4 h-4" />
+                    Analyze Code
+                  </>
+                )}
+              </button>
             </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
+            <div className="bg-black/50 rounded-lg p-4 font-mono text-sm">
+              <pre className="text-green-400">{code}</pre>
+            </div>
+          </div>
 
-      {/* Main Analysis Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-gradient">Analyze Your Code</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Upload your code or select an example to see enterprise-grade analysis in action.
+          {/* Results Panel */}
+          <div className="space-y-6">
+            {/* Score Card */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">Security Score</h3>
+                <Shield className="w-6 h-6 text-blue-400" />
+              </div>
+              <div className="text-center">
+                <div className={`text-6xl font-bold mb-2 ${score >= 80 ? 'text-green-400' : score >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                  {score || '--'}
+                </div>
+                <div className="text-sm text-gray-400">
+                  {score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : 'Needs Improvement'}
+                </div>
+              </div>
+            </div>
+
+            {/* Issues Found */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">Issues Found</h3>
+                <AlertCircle className="w-6 h-6 text-orange-400" />
+              </div>
+              <div className="space-y-3">
+                {issues.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No issues detected</p>
+                ) : (
+                  issues.map((issue, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg">
+                      {issue.severity === 'error' && <AlertCircle className="w-5 h-5 text-red-400 mt-0.5" />}
+                      {issue.severity === 'warning' && <AlertTriangle className="w-5 h-5 text-yellow-400 mt-0.5" />}
+                      {issue.severity === 'info' && <Info className="w-5 h-5 text-blue-400 mt-0.5" />}
+                      <div className="flex-1">
+                        <div className="font-medium text-white">{issue.message}</div>
+                        <div className="text-sm text-gray-400">Line {issue.line} • {issue.type}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 6. FEATURE GRID (Glassmorphism) */}
+      <div className="max-w-7xl mx-auto px-6 pb-32">
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="group p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Bug className="w-7 h-7 text-blue-400" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-4">Real-time Detection</h3>
+            <p className="text-gray-400 leading-relaxed">
+              Instant vulnerability scanning as you code with contextual security recommendations.
             </p>
           </div>
 
-          {/* Controls */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="javascript">JavaScript</SelectItem>
-                <SelectItem value="typescript">TypeScript</SelectItem>
-                <SelectItem value="python">Python</SelectItem>
-                <SelectItem value="java">Java</SelectItem>
-                <SelectItem value="cpp">C++</SelectItem>
-                <SelectItem value="csharp">C#</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditorTheme(editorTheme === 'vs-dark' ? 'light' : 'vs-dark')}
-              className="border-border hover:bg-muted/50"
-            >
-              {editorTheme === 'vs-dark' ? 'Light' : 'Dark'} Theme
-            </Button>
-
-            <Button
-              onClick={analyzeCode}
-              disabled={isAnalyzing || !code.trim()}
-              className="bg-gradient-to-r from-primary to-accent text-white border-0 hover:opacity-90"
-            >
-              {isAnalyzing ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="mr-2"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </motion.div>
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 mr-2" />
-                  Analyze Code
-                </>
-              )}
-            </Button>
+          <div className="group p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Shield className="w-7 h-7 text-blue-400" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-4">OWASP Compliance</h3>
+            <p className="text-gray-400 leading-relaxed">
+              Comprehensive security scanning with automated compliance checking and reporting.
+            </p>
           </div>
 
-          {/* Enhanced Editor */}
-          <EnhancedEditor
-            code={code}
-            language={language}
-            issues={result?.issues || []}
-            onCodeChange={setCode}
-            theme={editorTheme}
-          />
-
-          {/* Results Section */}
-          {result && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="mt-12"
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Quality Score */}
-                <Card className="surface-glass">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      Quality Score
-                      <Clock className="w-5 h-5 text-muted-foreground" />
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col items-center space-y-4">
-                      <QualityGauge score={result.score} size={150} />
-                      <div className="text-center">
-                        <div className={`text-2xl font-bold ${getScoreColor(result.score)}`}>
-                          {result.score}%
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {result.summary}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Analysis completed in {result.analysisTime.toFixed(1)}s
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Metrics */}
-                <Card className="surface-glass">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Code Metrics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {Object.entries(result.metrics).map(([key, value]) => (
-                        <div key={key} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            {getMetricIcon(key)}
-                            <span className="text-sm font-medium capitalize">{key}</span>
-                          </div>
-                          <Badge className={getMetricColor(value)}>
-                            {value}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Issue Breakdown */}
-                <Card className="surface-glass">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Issue Breakdown</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <AlertCircle className="w-4 h-4 text-red-400" />
-                          <span className="text-sm">Critical</span>
-                        </div>
-                        <Badge variant="destructive" className="bg-red-500/15 text-red-200 border-red-500/30">
-                          {result.issues.filter(i => i.severity === 'error').length}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                          <span className="text-sm">Warnings</span>
-                        </div>
-                        <Badge variant="secondary" className="bg-yellow-500/15 text-yellow-200 border-yellow-500/30">
-                          {result.issues.filter(i => i.severity === 'warning').length}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Info className="w-4 h-4 text-blue-400" />
-                          <span className="text-sm">Suggestions</span>
-                        </div>
-                        <Badge variant="outline" className="bg-blue-500/15 text-blue-200 border-blue-500/30">
-                          {result.issues.filter(i => i.severity === 'info').length}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Features Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-20">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 surface-glass-subtle">
-                <Database className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">50+ Languages</h3>
-              <p className="text-muted-foreground">Support for all major programming languages</p>
+          <div className="group p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Zap className="w-7 h-7 text-blue-400" />
             </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-secondary/20 to-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4 surface-glass-subtle">
-                <BarChart3 className="w-8 h-8 text-secondary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Real-time Analysis</h3>
-              <p className="text-muted-foreground">Instant feedback as you write code</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-accent/20 to-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 surface-glass-subtle">
-                <Shield className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Enterprise Security</h3>
-              <p className="text-muted-foreground">SOC2 compliant with encryption</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 surface-glass-subtle">
-                <Zap className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Lightning Fast</h3>
-              <p className="text-muted-foreground">Sub-second analysis at scale</p>
-            </div>
+            <h3 className="text-xl font-bold text-white mb-4">Auto-Remediation</h3>
+            <p className="text-gray-400 leading-relaxed">
+              AI-powered code fixes with one-click remediation for common security issues.
+            </p>
           </div>
-
-          <footer className="mt-14 border-t border-border py-10 text-center">
-            <p className="text-sm text-muted-foreground">© 2026 CodeScan AI. Enterprise Code Analysis Platform.</p>
-          </footer>
         </div>
-      </section>
-    </div>
-  )
+      </div>
+    </main>
+  );
 }
