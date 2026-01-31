@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2, Zap, Shield, BarChart3, Globe, Play, Code, Bug, Terminal, Settings, AlertCircle, AlertTriangle, Info, Clock, Cpu, FileText, Database } from 'lucide-react';
+import { analyzeCode as performAnalysis, type AnalysisResult } from './api/mock-analyze';
 
 export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -8,17 +9,24 @@ const query = "SELECT * FROM users WHERE id = " + userId;
 db.query(query);`);
   const [issues, setIssues] = useState<Array<{line: number, severity: string, message: string, type: string}>>([]);
   const [score, setScore] = useState(0);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
 
-  const analyzeCode = async () => {
+  const handleAnalyzeCode = async () => {
+    if (!code.trim()) return;
+
     setIsAnalyzing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIssues([
-      { line: 2, severity: 'error', message: 'SQL injection vulnerability', type: 'Security' },
-      { line: 2, severity: 'warning', message: 'Unsanitized user input', type: 'Security' }
-    ]);
-    setScore(45);
-    setIsAnalyzing(false);
+    setResult(null);
+
+    try {
+      const analysisResult = await performAnalysis(code);
+      setResult(analysisResult);
+      setIssues(analysisResult.issues);
+      setScore(analysisResult.score);
+    } catch (error) {
+      console.error('Analysis failed:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -73,7 +81,7 @@ db.query(query);`);
         {/* CTA BUTTONS */}
         <div className="flex flex-col sm:flex-row gap-6 mb-20">
           <button 
-            onClick={analyzeCode}
+            onClick={handleAnalyzeCode}
             disabled={isAnalyzing}
             className="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-semibold text-lg transition-all hover:scale-105 shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] flex items-center gap-2 disabled:opacity-50"
           >
@@ -139,7 +147,7 @@ db.query(query);`);
                 <span className="ml-3 text-sm text-gray-400">main.js</span>
               </div>
               <button 
-                onClick={analyzeCode}
+                onClick={handleAnalyzeCode}
                 disabled={isAnalyzing}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-all disabled:opacity-50 flex items-center gap-2"
               >
